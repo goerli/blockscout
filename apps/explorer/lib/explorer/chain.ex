@@ -116,7 +116,9 @@ defmodule Explorer.Chain do
       transactions older than the `block_number`, `transaction index`, and `index` that are passed.
 
   """
-  @spec address_to_internal_transactions(Address.t(), [paging_options | necessity_by_association_option]) :: [
+  @spec address_to_internal_transactions(Address.t(), [
+          paging_options | necessity_by_association_option
+        ]) :: [
           InternalTransaction.t()
         ]
   def address_to_internal_transactions(%Address{hash: hash}, options \\ []) do
@@ -238,7 +240,9 @@ defmodule Explorer.Chain do
       `:key` (in the form of `%{"inserted_at" => inserted_at}`). Results will be the transactions
       older than the `index` that are passed.
   """
-  @spec address_to_transactions_with_token_transfers(Hash.t(), Hash.t(), [paging_options]) :: [Transaction.t()]
+  @spec address_to_transactions_with_token_transfers(Hash.t(), Hash.t(), [paging_options]) :: [
+          Transaction.t()
+        ]
   def address_to_transactions_with_token_transfers(address_hash, token_hash, options \\ []) do
     paging_options = Keyword.get(options, :paging_options, @default_paging_options)
 
@@ -372,7 +376,9 @@ defmodule Explorer.Chain do
       `:key` (a tuple of the lowest/oldest `{index}`) and. Results will be the transactions older than
       the `index` that are passed.
   """
-  @spec block_to_transactions(Block.t(), [paging_options | necessity_by_association_option]) :: [Transaction.t()]
+  @spec block_to_transactions(Block.t(), [paging_options | necessity_by_association_option]) :: [
+          Transaction.t()
+        ]
   def block_to_transactions(%Block{hash: block_hash}, options \\ []) when is_list(options) do
     necessity_by_association = Keyword.get(options, :necessity_by_association, %{})
 
@@ -524,7 +530,10 @@ defmodule Explorer.Chain do
 
     if min_block_number_transaction do
       Transaction
-      |> where([t], t.block_number == ^min_block_number_transaction and is_nil(t.internal_transactions_indexed_at))
+      |> where(
+        [t],
+        t.block_number == ^min_block_number_transaction and is_nil(t.internal_transactions_indexed_at)
+      )
       |> limit(1)
       |> Repo.one()
       |> case do
@@ -676,7 +685,8 @@ defmodule Explorer.Chain do
 
   """
   @spec hash_to_block(Hash.Full.t(), [necessity_by_association_option]) :: {:ok, Block.t()} | {:error, :not_found}
-  def hash_to_block(%Hash{byte_count: unquote(Hash.Full.byte_count())} = hash, options \\ []) when is_list(options) do
+  def hash_to_block(%Hash{byte_count: unquote(Hash.Full.byte_count())} = hash, options \\ [])
+      when is_list(options) do
     necessity_by_association = Keyword.get(options, :necessity_by_association, %{})
 
     Block
@@ -928,7 +938,8 @@ defmodule Explorer.Chain do
           [paging_options | necessity_by_association_option],
           Address.t()
         ) :: [Block.t()]
-  def get_blocks_validated_by_address(options \\ [], %Address{hash: hash}) when is_list(options) do
+  def get_blocks_validated_by_address(options \\ [], %Address{hash: hash})
+      when is_list(options) do
     necessity_by_association = Keyword.get(options, :necessity_by_association, %{})
     paging_options = Keyword.get(options, :paging_options, @default_paging_options)
 
@@ -992,7 +1003,8 @@ defmodule Explorer.Chain do
   @spec stream_unfetched_balances(
           initial :: accumulator,
           reducer ::
-            (entry :: %{address_hash: Hash.Address.t(), block_number: Block.block_number()}, accumulator -> accumulator)
+            (entry :: %{address_hash: Hash.Address.t(), block_number: Block.block_number()}, accumulator ->
+               accumulator)
         ) :: {:ok, accumulator}
         when accumulator: term()
   def stream_unfetched_balances(initial, reducer) when is_function(reducer, 2) do
@@ -1085,7 +1097,8 @@ defmodule Explorer.Chain do
           reducer :: (entry :: term(), accumulator -> accumulator)
         ) :: {:ok, accumulator}
         when accumulator: term()
-  def stream_transactions_with_unfetched_internal_transactions(fields, initial, reducer) when is_function(reducer, 2) do
+  def stream_transactions_with_unfetched_internal_transactions(fields, initial, reducer)
+      when is_function(reducer, 2) do
     Repo.transaction(
       fn ->
         query =
@@ -1363,14 +1376,19 @@ defmodule Explorer.Chain do
       the `block_number` and `index` that are passed.
 
   """
-  @spec recent_collated_transactions([paging_options | necessity_by_association_option]) :: [Transaction.t()]
+  @spec recent_collated_transactions([paging_options | necessity_by_association_option]) :: [
+          Transaction.t()
+        ]
   def recent_collated_transactions(options \\ []) when is_list(options) do
     necessity_by_association = Keyword.get(options, :necessity_by_association, %{})
 
     options
     |> Keyword.get(:paging_options, @default_paging_options)
     |> fetch_transactions()
-    |> where([transaction], not is_nil(transaction.block_number) and not is_nil(transaction.index))
+    |> where(
+      [transaction],
+      not is_nil(transaction.block_number) and not is_nil(transaction.index)
+    )
     |> order_by([transaction], desc: transaction.block_number, desc: transaction.index)
     |> join_associations(necessity_by_association)
     |> preload([{:token_transfers, [:token, :from_address, :to_address]}])
@@ -1401,7 +1419,9 @@ defmodule Explorer.Chain do
       Results will be the transactions older than the `inserted_at` and `hash` that are passed.
 
   """
-  @spec recent_pending_transactions([paging_options | necessity_by_association_option]) :: [Transaction.t()]
+  @spec recent_pending_transactions([paging_options | necessity_by_association_option]) :: [
+          Transaction.t()
+        ]
   def recent_pending_transactions(options \\ []) when is_list(options) do
     necessity_by_association = Keyword.get(options, :necessity_by_association, %{})
     paging_options = Keyword.get(options, :paging_options, @default_paging_options)
@@ -1526,7 +1546,10 @@ defmodule Explorer.Chain do
   @spec transaction_estimated_count() :: non_neg_integer()
   def transaction_estimated_count do
     %Postgrex.Result{rows: [[rows]]} =
-      SQL.query!(Repo, "SELECT reltuples::BIGINT AS estimate FROM pg_class WHERE relname='transactions'")
+      SQL.query!(
+        Repo,
+        "SELECT reltuples::BIGINT AS estimate FROM pg_class WHERE relname='transactions'"
+      )
 
     rows
   end
@@ -1545,7 +1568,9 @@ defmodule Explorer.Chain do
 
   """
 
-  @spec transaction_to_internal_transactions(Transaction.t(), [paging_options | necessity_by_association_option]) :: [
+  @spec transaction_to_internal_transactions(Transaction.t(), [
+          paging_options | necessity_by_association_option
+        ]) :: [
           InternalTransaction.t()
         ]
   def transaction_to_internal_transactions(
@@ -1612,7 +1637,9 @@ defmodule Explorer.Chain do
       the `index` that are passed.
 
   """
-  @spec transaction_to_token_transfers(Transaction.t(), [paging_options | necessity_by_association_option]) :: [
+  @spec transaction_to_token_transfers(Transaction.t(), [
+          paging_options | necessity_by_association_option
+        ]) :: [
           TokenTransfer.t()
         ]
   def transaction_to_token_transfers(
@@ -1659,10 +1686,15 @@ defmodule Explorer.Chain do
   def transaction_to_status(%Transaction{status: nil}), do: :awaiting_internal_transactions
   def transaction_to_status(%Transaction{status: :ok}), do: :success
 
-  def transaction_to_status(%Transaction{status: :error, internal_transactions_indexed_at: nil, error: nil}),
-    do: {:error, :awaiting_internal_transactions}
+  def transaction_to_status(%Transaction{
+        status: :error,
+        internal_transactions_indexed_at: nil,
+        error: nil
+      }),
+      do: {:error, :awaiting_internal_transactions}
 
-  def transaction_to_status(%Transaction{status: :error, error: error}) when is_binary(error), do: {:error, error}
+  def transaction_to_status(%Transaction{status: :error, error: error}) when is_binary(error),
+    do: {:error, error}
 
   @doc """
   The `t:Explorer.Chain.Transaction.t/0` or `t:Explorer.Chain.InternalTransaction.t/0` `value` of the `transaction` in
@@ -1729,7 +1761,9 @@ defmodule Explorer.Chain do
     {:ok, []}
   end
 
-  defp create_address_name(%{smart_contract: %SmartContract{name: name, address_hash: address_hash}}) do
+  defp create_address_name(%{
+         smart_contract: %SmartContract{name: name, address_hash: address_hash}
+       }) do
     params = %{
       address_hash: address_hash,
       name: name,
@@ -1813,7 +1847,9 @@ defmodule Explorer.Chain do
 
   defp page_internal_transaction(query, %PagingOptions{key: nil}), do: query
 
-  defp page_internal_transaction(query, %PagingOptions{key: {block_number, transaction_index, index}}) do
+  defp page_internal_transaction(query, %PagingOptions{
+         key: {block_number, transaction_index, index}
+       }) do
     where(
       query,
       [internal_transaction],
@@ -1921,7 +1957,8 @@ defmodule Explorer.Chain do
           reducer :: (entry :: Hash.Address.t(), accumulator -> accumulator)
         ) :: {:ok, accumulator}
         when accumulator: term()
-  def stream_uncataloged_token_contract_address_hashes(initial_acc, reducer) when is_function(reducer, 2) do
+  def stream_uncataloged_token_contract_address_hashes(initial_acc, reducer)
+      when is_function(reducer, 2) do
     Repo.transaction(
       fn ->
         query =
@@ -1947,11 +1984,12 @@ defmodule Explorer.Chain do
           reducer :: (entry :: Hash.Address.t(), accumulator -> accumulator)
         ) :: {:ok, accumulator}
         when accumulator: term()
-  def stream_cataloged_token_contract_address_hashes(initial_acc, reducer) when is_function(reducer, 2) do
+  def stream_cataloged_token_contract_address_hashes(initial_acc, reducer)
+      when is_function(reducer, 2) do
     Repo.transaction(
       fn ->
         Chain.Token.cataloged_tokens()
-        |> Ecto.Query.order_by([asc: :updated_at])
+        |> order_by(asc: :updated_at)
         |> Repo.stream(timeout: :infinity)
         |> Enum.reduce(initial_acc, reducer)
       end,
@@ -2018,7 +2056,12 @@ defmodule Explorer.Chain do
 
   @spec transaction_has_token_transfers?(Hash.t()) :: boolean()
   def transaction_has_token_transfers?(transaction_hash) do
-    query = from(tt in TokenTransfer, where: tt.transaction_hash == ^transaction_hash, limit: 1, select: 1)
+    query =
+      from(tt in TokenTransfer,
+        where: tt.transaction_hash == ^transaction_hash,
+        limit: 1,
+        select: 1
+      )
 
     Repo.one(query) != nil
   end
@@ -2039,9 +2082,14 @@ defmodule Explorer.Chain do
   @spec update_token(Token.t(), map()) :: {:ok, Token.t()} | {:error, Ecto.Changeset.t()}
   def update_token(%Token{contract_address_hash: address_hash} = token, params \\ %{}) do
     token_changeset = Token.changeset(token, params)
+
     address_name_changeset = Address.Name.changeset(%Address.Name{}, Map.put(params, :address_hash, address_hash))
 
-    token_opts = [on_conflict: Import.Tokens.default_on_conflict(), conflict_target: :contract_address_hash]
+    token_opts = [
+      on_conflict: Import.Tokens.default_on_conflict(),
+      conflict_target: :contract_address_hash
+    ]
+
     address_name_opts = [on_conflict: :nothing, conflict_target: [:address_hash, :name]]
 
     insert_result =
@@ -2070,7 +2118,9 @@ defmodule Explorer.Chain do
     |> Repo.all()
   end
 
-  @spec fetch_token_holders_from_token_hash(Hash.Address.t(), [paging_options]) :: [TokenBalance.t()]
+  @spec fetch_token_holders_from_token_hash(Hash.Address.t(), [paging_options]) :: [
+          TokenBalance.t()
+        ]
   def fetch_token_holders_from_token_hash(contract_address_hash, options) do
     contract_address_hash
     |> CurrentTokenBalance.token_holders_ordered_by_value(options)

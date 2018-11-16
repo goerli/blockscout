@@ -373,18 +373,26 @@ defmodule Explorer.ChainTest do
   describe "balance/2" do
     test "with Address.t with :wei" do
       assert Chain.balance(%Address{fetched_coin_balance: %Wei{value: Decimal.new(1)}}, :wei) == Decimal.new(1)
+
       assert Chain.balance(%Address{fetched_coin_balance: nil}, :wei) == nil
     end
 
     test "with Address.t with :gwei" do
       assert Chain.balance(%Address{fetched_coin_balance: %Wei{value: Decimal.new(1)}}, :gwei) == Decimal.new("1e-9")
+
       assert Chain.balance(%Address{fetched_coin_balance: %Wei{value: Decimal.new("1e9")}}, :gwei) == Decimal.new(1)
+
       assert Chain.balance(%Address{fetched_coin_balance: nil}, :gwei) == nil
     end
 
     test "with Address.t with :ether" do
       assert Chain.balance(%Address{fetched_coin_balance: %Wei{value: Decimal.new(1)}}, :ether) == Decimal.new("1e-18")
-      assert Chain.balance(%Address{fetched_coin_balance: %Wei{value: Decimal.new("1e18")}}, :ether) == Decimal.new(1)
+
+      assert Chain.balance(
+               %Address{fetched_coin_balance: %Wei{value: Decimal.new("1e18")}},
+               :ether
+             ) == Decimal.new(1)
+
       assert Chain.balance(%Address{fetched_coin_balance: nil}, :ether) == nil
     end
   end
@@ -492,18 +500,36 @@ defmodule Explorer.ChainTest do
 
   describe "fee/2" do
     test "without receipt with :wei unit" do
-      assert Chain.fee(%Transaction{gas: Decimal.new(3), gas_price: %Wei{value: Decimal.new(2)}, gas_used: nil}, :wei) ==
-               {:maximum, Decimal.new(6)}
+      assert Chain.fee(
+               %Transaction{
+                 gas: Decimal.new(3),
+                 gas_price: %Wei{value: Decimal.new(2)},
+                 gas_used: nil
+               },
+               :wei
+             ) == {:maximum, Decimal.new(6)}
     end
 
     test "without receipt with :gwei unit" do
-      assert Chain.fee(%Transaction{gas: Decimal.new(3), gas_price: %Wei{value: Decimal.new(2)}, gas_used: nil}, :gwei) ==
-               {:maximum, Decimal.new("6e-9")}
+      assert Chain.fee(
+               %Transaction{
+                 gas: Decimal.new(3),
+                 gas_price: %Wei{value: Decimal.new(2)},
+                 gas_used: nil
+               },
+               :gwei
+             ) == {:maximum, Decimal.new("6e-9")}
     end
 
     test "without receipt with :ether unit" do
-      assert Chain.fee(%Transaction{gas: Decimal.new(3), gas_price: %Wei{value: Decimal.new(2)}, gas_used: nil}, :ether) ==
-               {:maximum, Decimal.new("6e-18")}
+      assert Chain.fee(
+               %Transaction{
+                 gas: Decimal.new(3),
+                 gas_price: %Wei{value: Decimal.new(2)},
+                 gas_used: nil
+               },
+               :ether
+             ) == {:maximum, Decimal.new("6e-18")}
     end
 
     test "with receipt with :wei unit" do
@@ -790,7 +816,10 @@ defmodule Explorer.ChainTest do
                %TokenTransfer{transaction_hash: transaction_hash, log_index: log_index} =
                  hd(transaction.token_transfers)
 
-               {transaction_hash, log_index} in [{transaction_hash1, log_index1}, {transaction_hash2, log_index2}]
+               {transaction_hash, log_index} in [
+                 {transaction_hash1, log_index1},
+                 {transaction_hash2, log_index2}
+               ]
              end)
     end
   end
@@ -1356,7 +1385,10 @@ defmodule Explorer.ChainTest do
         |> insert()
         |> with_block(block)
 
-      %InternalTransaction{transaction_hash: first_pending_transaction_hash, index: first_pending_index} =
+      %InternalTransaction{
+        transaction_hash: first_pending_transaction_hash,
+        index: first_pending_index
+      } =
         insert(
           :internal_transaction,
           transaction: pending_transaction,
@@ -1366,7 +1398,10 @@ defmodule Explorer.ChainTest do
           transaction_index: pending_transaction.index
         )
 
-      %InternalTransaction{transaction_hash: second_pending_transaction_hash, index: second_pending_index} =
+      %InternalTransaction{
+        transaction_hash: second_pending_transaction_hash,
+        index: second_pending_index
+      } =
         insert(
           :internal_transaction,
           transaction: pending_transaction,
@@ -2057,11 +2092,13 @@ defmodule Explorer.ChainTest do
 
     test "with Transaction.t with :gwei" do
       assert Chain.value(%Transaction{value: %Wei{value: Decimal.new(1)}}, :gwei) == Decimal.new("1e-9")
+
       assert Chain.value(%Transaction{value: %Wei{value: Decimal.new("1e9")}}, :gwei) == Decimal.new(1)
     end
 
     test "with Transaction.t with :ether" do
       assert Chain.value(%Transaction{value: %Wei{value: Decimal.new(1)}}, :ether) == Decimal.new("1e-18")
+
       assert Chain.value(%Transaction{value: %Wei{value: Decimal.new("1e18")}}, :ether) == Decimal.new(1)
     end
   end
@@ -2085,7 +2122,11 @@ defmodule Explorer.ChainTest do
 
     test "finds an contract address" do
       address =
-        insert(:address, contract_code: Factory.data("contract_code"), smart_contract: nil, names: [])
+        insert(:address,
+          contract_code: Factory.data("contract_code"),
+          smart_contract: nil,
+          names: []
+        )
         |> Repo.preload([:contracts_creation_internal_transaction, :token])
 
       response = Chain.find_contract_address(address.hash)
@@ -2145,7 +2186,12 @@ defmodule Explorer.ChainTest do
         |> Enum.reverse()
 
       oldest_seen = Enum.at(newest_first_transactions, 9)
-      paging_options = %Explorer.PagingOptions{page_size: 10, key: {oldest_seen.block_number, oldest_seen.index}}
+
+      paging_options = %Explorer.PagingOptions{
+        page_size: 10,
+        key: {oldest_seen.block_number, oldest_seen.index}
+      }
+
       recent_collated_transactions = Explorer.Chain.recent_collated_transactions(paging_options: paging_options)
 
       assert length(recent_collated_transactions) == 10
@@ -2278,7 +2324,10 @@ defmodule Explorer.ChainTest do
              )
     end
 
-    test "clears an existing primary name and sets the new one", %{valid_attrs: valid_attrs, address: address} do
+    test "clears an existing primary name and sets the new one", %{
+      valid_attrs: valid_attrs,
+      address: address
+    } do
       insert(:address_name, address: address, primary: true)
       assert {:ok, %SmartContract{} = smart_contract} = Chain.create_smart_contract(valid_attrs)
 
@@ -2430,7 +2479,11 @@ defmodule Explorer.ChainTest do
         transaction_index: transaction.index
       )
 
-      balance = insert(:unfetched_balance, address_hash: created_contract_address.hash, block_number: block.number)
+      balance =
+        insert(:unfetched_balance,
+          address_hash: created_contract_address.hash,
+          block_number: block.number
+        )
 
       {:ok, balance_fields_list} =
         Explorer.Chain.stream_unfetched_balances(
@@ -2549,7 +2602,10 @@ defmodule Explorer.ChainTest do
       |> insert(from_address: miner)
       |> with_block(from_transaction_block)
 
-      insert(:unfetched_balance, address_hash: miner.hash, block_number: from_transaction_block.number)
+      insert(:unfetched_balance,
+        address_hash: miner.hash,
+        block_number: from_transaction_block.number
+      )
 
       to_transaction_block = insert(:block)
 
@@ -2557,7 +2613,10 @@ defmodule Explorer.ChainTest do
       |> insert(to_address: miner)
       |> with_block(to_transaction_block)
 
-      insert(:unfetched_balance, address_hash: miner.hash, block_number: to_transaction_block.number)
+      insert(:unfetched_balance,
+        address_hash: miner.hash,
+        block_number: to_transaction_block.number
+      )
 
       log_block = insert(:block)
 
@@ -2585,7 +2644,10 @@ defmodule Explorer.ChainTest do
         transaction_index: from_internal_transaction_transaction.index
       )
 
-      insert(:unfetched_balance, address_hash: miner.hash, block_number: from_internal_transaction_block.number)
+      insert(:unfetched_balance,
+        address_hash: miner.hash,
+        block_number: from_internal_transaction_block.number
+      )
 
       to_internal_transaction_block = insert(:block)
 
@@ -2603,7 +2665,10 @@ defmodule Explorer.ChainTest do
         transaction_index: to_internal_transaction_transaction.index
       )
 
-      insert(:unfetched_balance, address_hash: miner.hash, block_number: to_internal_transaction_block.number)
+      insert(:unfetched_balance,
+        address_hash: miner.hash,
+        block_number: to_internal_transaction_block.number
+      )
 
       {:ok, balance_fields_list} =
         Explorer.Chain.stream_unfetched_balances(
@@ -2613,7 +2678,9 @@ defmodule Explorer.ChainTest do
 
       balance_fields_list_by_address_hash = Enum.group_by(balance_fields_list, & &1.address_hash)
 
-      assert balance_fields_list_by_address_hash[miner.hash] |> Enum.map(& &1.block_number) |> Enum.sort() ==
+      assert balance_fields_list_by_address_hash[miner.hash]
+             |> Enum.map(& &1.block_number)
+             |> Enum.sort() ==
                Enum.sort([
                  to_internal_transaction_block.number,
                  from_internal_transaction_block.number,
@@ -2681,7 +2748,9 @@ defmodule Explorer.ChainTest do
 
       balance_fields_list_by_address_hash = Enum.group_by(balance_fields_list, & &1.address_hash)
 
-      assert balance_fields_list_by_address_hash[miner.hash] |> Enum.map(& &1.block_number) |> Enum.sort() == [
+      assert balance_fields_list_by_address_hash[miner.hash]
+             |> Enum.map(& &1.block_number)
+             |> Enum.sort() == [
                block.number
              ]
     end
@@ -2753,6 +2822,7 @@ defmodule Explorer.ChainTest do
   test "stream_uncataloged_token_contract_address_hashes/2 reduces with given reducer and accumulator" do
     insert(:token, cataloged: true)
     %Token{contract_address_hash: uncatalog_address} = insert(:token, cataloged: false)
+
     assert Chain.stream_uncataloged_token_contract_address_hashes([], &[&1 | &2]) == {:ok, [uncatalog_address]}
   end
 
@@ -2760,6 +2830,7 @@ defmodule Explorer.ChainTest do
     test "reduces with given reducer and accumulator" do
       %Token{contract_address_hash: catalog_address} = insert(:token, cataloged: true)
       insert(:token, cataloged: false)
+
       assert Chain.stream_cataloged_token_contract_address_hashes([], &[&1 | &2]) == {:ok, [catalog_address]}
     end
 
@@ -2773,7 +2844,7 @@ defmodule Explorer.ChainTest do
       expected_response =
         [token1, token2]
         |> Enum.sort(&(&1.updated_at < &2.updated_at))
-        |> Enum.map(&(&1.contract_address_hash))
+        |> Enum.map(& &1.contract_address_hash)
 
       assert Chain.stream_cataloged_token_contract_address_hashes([], &(&2 ++ [&1])) == {:ok, expected_response}
     end
@@ -2842,7 +2913,11 @@ defmodule Explorer.ChainTest do
       }
 
       Chain.update_token(token, update_params)
-      assert Repo.get_by(Address.Name, name: update_params.name, address_hash: token.contract_address_hash)
+
+      assert Repo.get_by(Address.Name,
+               name: update_params.name,
+               address_hash: token.contract_address_hash
+             )
     end
 
     test "does not insert address name record when token doesn't have name in params" do
@@ -2927,7 +3002,11 @@ defmodule Explorer.ChainTest do
       token_balances = Chain.fetch_last_token_balances(address.hash)
 
       assert Enum.count(token_balances) == 2
-      assert Enum.map(token_balances, & &1.value) == [token_balance_a.value, token_balance_b.value]
+
+      assert Enum.map(token_balances, & &1.value) == [
+               token_balance_a.value,
+               token_balance_b.value
+             ]
     end
 
     test "returns an empty list when there are no token balances" do

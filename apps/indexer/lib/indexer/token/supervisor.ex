@@ -22,12 +22,17 @@ defmodule Indexer.Token.Supervisor do
   end
 
   def start_link(arguments, gen_server_options \\ []) do
-    Supervisor.start_link(__MODULE__, arguments, Keyword.put_new(gen_server_options, :name, __MODULE__))
+    Supervisor.start_link(
+      __MODULE__,
+      arguments,
+      Keyword.put_new(gen_server_options, :name, __MODULE__)
+    )
   end
 
   @impl Supervisor
   def init(fetcher_arguments) do
     metadata_updater_inverval = Application.get_env(:indexer, :metadata_updater_days_interval)
+
     Supervisor.init(
       [
         {Task.Supervisor, name: Indexer.Token.TaskSupervisor},
